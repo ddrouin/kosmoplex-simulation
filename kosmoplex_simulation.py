@@ -7,9 +7,15 @@ from mpmath import mp, ln, zeta, euler, phi, pi, sqrt
 
 # Dynamic alpha from paper's Eq. 22
 mp.dps = 20
+
+
 def compute_alpha_inverse(n=mp.mpf('8.07e60')):
-    mp_gamma = euler(); mp_zeta3 = zeta(3); base = mp.mpf(137)
-    ln_n = ln(n); ln_ln_n = ln(ln_n); x = (ln_n / (2 * base)) + (ln_ln_n / (mp.mpf(42) * 7))
+    mp_gamma = euler()
+    mp_zeta3 = zeta(3)
+    base = mp.mpf(137)
+    ln_n = ln(n)
+    ln_ln_n = ln(ln_n)
+    x = (ln_n / (2 * base)) + (ln_ln_n / (mp.mpf(42) * 7))
     return float(base + 1/(8*mp.pi) - mp_gamma/base + 1/(8*mp.pi - x) + mp_zeta3/(base*20))
 
 alpha = 1 / compute_alpha_inverse()
