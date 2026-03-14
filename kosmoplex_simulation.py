@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -15,12 +16,13 @@ alpha = 1 / compute_alpha_inverse()
 print(f"Derived alpha^{-1}: {1/alpha:.9f}")
 
 # Glyph-based initials (subset of 42 glyphs)
-glyphs = [1, 2, 3, 4, 7, 8, float(1/phi), float(phi), float(1/e), float(e), float(1/pi), float(pi),
+glyphs = [1, 2, 3, 4, 7, 8, float(1/phi), float(phi), float(1/mp.e), float(mp.e), float(1/pi), float(pi),
           float(1/sqrt(2)), float(sqrt(2)), float(1/sqrt(3)), float(sqrt(3)), float(1/sqrt(5)), float(sqrt(5)),
           float(1/ln(2)), float(ln(2)), 21, 42, 23, 46, 147, 137]
 heptagram_indices = [0, 3, 6, 9, 12, 15, 18, 21 % len(glyphs)]
 proton_coeffs = np.array([glyphs[i] for i in heptagram_indices])
 boson_coeffs = np.array([glyphs[(i+1) % len(glyphs)] for i in heptagram_indices])
+fano_lines = [[0, 1, 3], [1, 2, 4], [2, 3, 5], [3, 4, 6], [4, 5, 0], [5, 6, 1], [6, 0, 2]]
 
 # Octonion class
 class Octonion:
@@ -49,7 +51,6 @@ def yang_baxter_weave(line_values):
 
 # Fano interaction with weave
 def apply_fano_glyph_interaction(state, active_lines):
-    fano_lines = [[0, 1, 3], [1, 2, 4], [2, 3, 5], [3, 4, 6], [4, 5, 0], [5, 6, 1], [6, 0, 2]]
     new_coeffs = state.coeffs.copy()
     for line in [fano_lines[i] for i in active_lines]:
         values = [state.coeffs[idx] for idx in line]
@@ -92,10 +93,10 @@ for i in range(max_iterations):
     boson_4d = ternary_discretize(proj_matrix @ boson.coeffs)
     four_d_traj_proton.append(proton_4d)
     four_d_traj_boson.append(boson_4d)
-    
+
     proton_4d_noisy = ternary_discretize(proton_4d + np.random.normal(0, noise_level, 4))
     boson_4d_noisy = ternary_discretize(boson_4d + np.random.normal(0, noise_level, 4))
-    
+
     proton_feedback = feedback_matrix @ proton_4d_noisy
     boson_feedback = feedback_matrix @ boson_4d_noisy
     proton_feedback *= strong_factor
@@ -106,16 +107,16 @@ for i in range(max_iterations):
             shared_update.coeffs[idx] = (proton_feedback[idx] + boson_feedback[idx]) / 2
     proton_update = ternary_discretize(proton.coeffs + alpha * (proton_feedback + shared_update.coeffs))
     boson_update = ternary_discretize(boson.coeffs + alpha * (boson_feedback + shared_update.coeffs))
-    
+
     proton = apply_fano_glyph_interaction(Octonion(proton_update), proton_lines)
     boson = apply_fano_glyph_interaction(Octonion(boson_update), boson_lines)
-    
+
     proton_traj.append(proton.coeffs)
     boson_traj.append(boson.coeffs)
-    
+
     if i >= convergence_steps:
-        flips = sum(np.any(proton_traj[-j-1] != proton_traj[-j-2]) or 
-                   np.any(boson_traj[-j-1] != boson_traj[-j-2]) 
+        flips = sum(np.any(proton_traj[-j-1] != proton_traj[-j-2]) or
+                   np.any(boson_traj[-j-1] != boson_traj[-j-2])
                    for j in range(1, convergence_steps + 1))
         flip_rate = flips / (convergence_steps * 8)
         recent_flips.append(flip_rate)
@@ -163,5 +164,6 @@ ax2.set_xlabel('PC1'); ax2.set_ylabel('PC2'); ax2.set_zlabel('PC3')
 ax2.legend()
 
 plt.tight_layout()
+os.makedirs('plots', exist_ok=True)
 plt.savefig('plots/simulation_plot.png')
 plt.show()
